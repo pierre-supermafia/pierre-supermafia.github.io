@@ -5,6 +5,8 @@ const SMALL_GRID_ZOOM_THRESHOLD = 0.8;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;
 
+const CAMERA_SIZE = 0.05;
+
 class Viewer {
 
     constructor(canvas) {
@@ -25,6 +27,7 @@ class Viewer {
         this.cameras = [];
 
         this.rectangles.push(new Rectangle(0, 0, 1.21, 0.68)); // Screen
+        this.cameras.push(new Camera(-1, 0, "D435"));
 
         this.setupListeners();
 
@@ -57,6 +60,8 @@ class Viewer {
     }
 
     render() {
+        this.ctx.beginPath();
+
         this.ctx.fillStyle = "#fff";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -114,7 +119,6 @@ class Viewer {
         
         this.ctx.strokeStyle = "#999"
         this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
         
         const realWidth = BASE_WIDTH / this.zoom;
         const realHeight = BASE_HEIGHT / this.zoom;
@@ -170,7 +174,26 @@ class Viewer {
 
     drawCameras() {
         for (let i = 0; i < this.cameras.length; ++i) {
-            // ...
+            const cam = this.cameras[i];
+            
+            this.ctx.fillStyle = cam.color;
+                
+            const x = canvas.width / 2  + (this.centerX + cam.x) * this.ratio;
+            const y = canvas.height / 2  + (this.centerY + cam.y) * this.ratio;
+
+            // Draw camera
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, CAMERA_SIZE * this.ratio, 0, 2 * Math.PI);
+            this.ctx.stroke();
+            this.ctx.fill();
+
+            // Draw its range
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, cam.minRange * this.ratio, (cam.alpha - cam.FoV / 2) * Math.PI / 180,
+            (cam.alpha + cam.FoV / 2) * Math.PI / 180, false);
+            this.ctx.arc(x, y, cam.maxRange * this.ratio, (cam.alpha + cam.FoV / 2) * Math.PI / 180,
+            (cam.alpha - cam.FoV / 2) * Math.PI / 180, true);
+            this.ctx.fill();
         }
     }
 }
