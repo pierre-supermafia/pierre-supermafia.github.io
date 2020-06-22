@@ -1,0 +1,30 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The Hole cameras placer</title>
+
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+</head>
+
+<body>
+    <h1>Placement des caméras</h1>
+
+    <h2>Ajout d'élément</h2>
+    <input type="radio" name="add-mode" value="rectangle" id="rectangle">
+    <label for="rectangle">Rectangle (écran ou limites de la pièce)</label><br />
+    <input type="radio" name="add-mode" value="D435" id="D435">
+    <label for="D435">D435</label><br/>
+    <input type="radio" name="add-mode" value="D415" id="D415">
+    <label for="D415">D415</label><br/>
+    <canvas id="canvas" width="960" height="720"></canvas>
+    
+    <script src="js/rectangle.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/viewer.js"></script>
+    <script src="js/the-hole.js"></script>
+</body>
+</html>
