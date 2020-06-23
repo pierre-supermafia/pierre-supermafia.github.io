@@ -76,6 +76,7 @@ class Viewer {
     }
 
     setupListeners() {
+        // Canvas listeners
         this.canvas.addEventListener("wheel", (event) => this.onWheel(event), false);
         this.canvas.addEventListener("mousedown", (event) => {
             if (event.button === 0) {
@@ -93,6 +94,48 @@ class Viewer {
         }, false);
         this.canvas.addEventListener("mousemove", (event) => this.onMouseMove(event));
         this.canvas.addEventListener("contextmenu", (event) => {event.preventDefault();});
+
+        // Input listeners
+        document.getElementById("rect-x").addEventListener("input", (event) => {
+            if (this.selectedRectangle >= 0) {
+                this.rectangles[this.selectedRectangle].x = event.target.value;
+            }
+        });
+        document.getElementById("rect-y").addEventListener("input", (event) => {
+            if (this.selectedRectangle >= 0) {
+                this.rectangles[this.selectedRectangle].y = event.target.value;
+            }
+        });
+        document.getElementById("rect-w").addEventListener("input", (event) => {
+            if (this.selectedRectangle >= 0) {
+                this.rectangles[this.selectedRectangle].w = event.target.value;
+            }
+        });
+        document.getElementById("rect-h").addEventListener("input", (event) => {
+            if (this.selectedRectangle >= 0) {
+                this.rectangles[this.selectedRectangle].h = event.target.value;
+            }
+        });
+        document.getElementById("cam-x").addEventListener("input", (event) => {
+            if (this.selectedCamera >= 0) {
+                this.cameras[this.selectedCamera].x = event.target.value;
+            }
+        });
+        document.getElementById("cam-y").addEventListener("input", (event) => {
+            if (this.selectedCamera >= 0) {
+                this.cameras[this.selectedCamera].y = event.target.value;
+            }
+        });
+        document.getElementById("cam-alpha").addEventListener("input", (event) => {
+            if (this.selectedCamera >= 0) {
+                this.cameras[this.selectedCamera].alpha = event.target.value * DEG_TO_RAD;
+            }
+        });
+        document.getElementById("cam-type").addEventListener("input", (event) => {
+            if (this.selectedCamera >= 0) {
+                this.cameras[this.selectedCamera].setType(event.target.value);
+            }
+        });
     }
 
     setZoom(zoom) {
@@ -153,26 +196,68 @@ class Viewer {
         // => change or reset select
 
         this.selectedCamera = -1;
+        document.getElementById("cam-container").hidden = true;
         this.selectedRectangle = -1;
+        document.getElementById("rect-container").hidden = true;
 
 
         // Object select : cameras have priority
         for (let i = 0; i < this.cameras.length; ++i) {
             let camera = this.cameras[i];
             if (camera.isPointInSelectRadius(x, y)) {
-                this.selectedCamera = i;
+                this.selectCamera(i);
                 return;
             }
         }
 
         // Smallest rectangle that is selected wins
         let minArea = Infinity;
+        let selected = -1;
         for (let i = 0; i < this.rectangles.length; ++i) {
             let rect = this.rectangles[i];
             if (rect.isPointInSelectRadius(x, y) && rect.getArea() < minArea) {
-                this.selectedRectangle = i;
+                selected = i;
             }
         }
+        if (selected >= 0) {
+            this.selectRectangle(selected);
+        }
+    }
+    
+    selectCamera(i) {
+        this.selectedCamera = i;
+        const cam = this.cameras[this.selectedCamera];
+
+        document.getElementById("cam-container").hidden = false;
+        switch (cam.type) {
+            default:
+            case "D435":
+                document.getElementById("cam-type").value = "D435 avec squelette";
+                break;
+            case "D435_RS":
+                document.getElementById("cam-type").value = "D435 sans squelette";
+                break;
+            case "D415":
+                document.getElementById("cam-type").value = "D415 avec squelette";
+                break;
+            case "D415_RS":
+                document.getElementById("cam-type").value = "D415 sans squelette";
+                break;
+        }
+        document.getElementById("cam-x").value = cam.x;
+        document.getElementById("cam-y").value = cam.y;
+        document.getElementById("cam-alpha").value = cam.alpha / DEG_TO_RAD;
+    }
+    
+    selectRectangle(i) {
+        this.selectedRectangle = i;
+        const rect = this.rectangles[this.selectedRectangle];
+
+        document.getElementById("rect-container").hidden = false;
+        document.getElementById("rect-x").value = rect.x;
+        document.getElementById("rect-y").value = rect.y;
+        document.getElementById("rect-w").value = rect.w;
+        document.getElementById("rect-h").value = rect.h;        
     }
 
     onLeftMouseUp(event) {

@@ -34,37 +34,48 @@ class Camera {
 
         this.alpha = 0;
 
+        this.setType(type);
+
+        this.viewer = viewer;
+        this.state = this.State.DEFAULT;
+    }
+
+    setType(type) {
+
         switch (type) {
             case "D435":
+            case "D435 avec squelette":
+                this.type = "D435";
                 this.minRange = D435_MIN_RANGE;
                 this.maxRange = D435_MAX_RANGE;
                 this.FoV = D435_FOV;
                 this.color = D435_COLOR;
                 break;
             case "D435_RS":
+            case "D435 sans squelette":
+                this.type = "D435_RS";
                 this.minRange = D435_RS_MIN_RANGE;
                 this.maxRange = D435_RS_MAX_RANGE;
                 this.FoV = D435_FOV;
                 this.color = D435_RS_COLOR;
                 break;
             case "D415":
+            case "D415 avec squelette":
+                this.type = "D415";
                 this.minRange = D415_MIN_RANGE;
                 this.maxRange = D415_MAX_RANGE;
                 this.FoV = D415_FOV;
                 this.color = D415_COLOR;
                 break;
             case "D415_RS":
+            case "D415 sans squelette":
+                this.type = "D415_RS";
                 this.minRange = D415_RS_MIN_RANGE;
                 this.maxRange = D415_RS_MAX_RANGE;
                 this.FoV = D415_FOV;
                 this.color = D415_RS_COLOR;
                 break;
-            default:
-                throw "Wrong parameter in for type";
         }
-
-        this.viewer = viewer;
-        this.state = this.State.DEFAULT;
     }
 
     isPointInSelectRadius(x, y) {

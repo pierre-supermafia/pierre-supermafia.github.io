@@ -13,14 +13,26 @@
 <body>
     <h1>Placement des caméras</h1>
 
-    <h2>Ajout d'élément</h2>
-    <input type="radio" name="add-mode" value="rectangle" id="rectangle">
-    <label for="rectangle">Rectangle (écran ou limites de la pièce)</label><br />
-    <input type="radio" name="add-mode" value="D435" id="D435">
-    <label for="D435">D435</label><br/>
-    <input type="radio" name="add-mode" value="D415" id="D415">
-    <label for="D415">D415</label><br/>
     <canvas id="canvas" width="960" height="720"></canvas>
+    <div id="rect-container" hidden>
+      <h2>Rectangle</h2>
+      <label for="rect-x">x : </label><input type="text" id="rect-x">
+      <label for="rect-y">y : </label><input type="text" id="rect-y">
+      <label for="rect-w">Longueur : </label><input type="text" id="rect-w">
+      <label for="rect-h">Largeur : </label><input type="text" id="rect-h">
+    </div>
+    <div id="cam-container" hidden>
+      <h2>Caméra</h2>
+      <label for="cam-type">Type : </label><select id="cam-type">
+        <option>D435 avec squelette</option>
+        <option>D435 sans squelette</option>
+        <option>D415 avec squelette</option>
+        <option>D415 sans squelette</option>
+      </select>
+      <label for="cam-x">x : </label><input type="text" id="cam-x">
+      <label for="cam-y">y : </label><input type="text" id="cam-y">
+      <label for="cam-alpha">Angle : </label><input type="text" id="cam-alpha">
+    </div>
     
     <script src="js/rectangle.js"></script>
     <script src="js/camera.js"></script>

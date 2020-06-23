@@ -123,7 +123,6 @@ class Rectangle {
                 break;
             case this.State.DEFAULT:
             default:
-
                 break;
         }
     }
