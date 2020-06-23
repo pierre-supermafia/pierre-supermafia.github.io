@@ -7,6 +7,10 @@ const MAX_ZOOM = 10;
 
 const CAMERA_SIZE = 0.05;
 
+const GRID_STRONG_COLOR = "#888";
+const GRID_WEAK_COLOR = "#bbb";
+const SCREEN_FILL_COLOR = "#444";
+
 class Viewer {
 
     constructor(canvas) {
@@ -19,19 +23,33 @@ class Viewer {
         this.centerX = 0;
         this.centerY = 0;
 
-        this.isMoving = false;
+        this.isDragging = false;
         this.previousMoveX = 0;
         this.previousMoveY = 0;
 
         this.rectangles = [];
         this.cameras = [];
-
-        this.rectangles.push(new Rectangle(0, 0, 1.21, 0.68)); // Screen
-        this.cameras.push(new Camera(-1, 0, "D435"));
+        
+        this.cameras.push(new Camera(-1, 0.25, "D435"));
+        this.screen = new Rectangle(0, 0, 1.21, 0.68);
 
         this.setupListeners();
 
         this.render();
+    }
+
+    w2c(x, y) {
+        return [
+            this.canvas.width / 2 + this.ratio * (this.centerX + x),
+            this.canvas.height / 2 + this.ratio * (this.centerY + y)
+        ];
+    }
+
+    c2w(x, y) {
+        return [
+            (x - this.canvas.width / 2) / this.ratio - this.centerX,
+            (y - this.canvas.height / 2) / this.ratio - this.centerY
+        ];
     }
 
     setupListeners() {
@@ -60,13 +78,9 @@ class Viewer {
     }
 
     render() {
-        this.ctx.beginPath();
-
-        this.ctx.fillStyle = "#fff";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.drawGrid();
-
         this.drawRectangles();
         this.drawCameras();
 
@@ -82,16 +96,16 @@ class Viewer {
 
     onRightMouseDown(event) {
         event.preventDefault();
-        this.isMoving = true;
+
+        this.isDragging = true;
         this.previousMoveX = event.offsetX;
         this.previousMoveY = event.offsetY;
-
-        console.log("sauce")
     }
 
     onRightMouseUp(event) {
         event.preventDefault();
-        this.isMoving = false;
+
+        this.isDragging = false;
     }
 
     onLeftMouseDown(event) {
@@ -103,7 +117,7 @@ class Viewer {
     }
 
     onMouseMove(event) {
-        if (this.isMoving) {
+        if (this.isDragging) {
             
             this.centerX += (event.offsetX - this.previousMoveX) / this.ratio;
             this.centerY += (event.offsetY - this.previousMoveY) / this.ratio;
@@ -117,7 +131,7 @@ class Viewer {
 
     drawGrid() {
         
-        this.ctx.strokeStyle = "#999"
+        this.ctx.strokeStyle = GRID_STRONG_COLOR;
         this.ctx.lineWidth = 2;
         
         const realWidth = BASE_WIDTH / this.zoom;
@@ -126,8 +140,11 @@ class Viewer {
         const nCols = Math.floor(realWidth);
         const nRows = Math.floor(realHeight);
 
-        const x0 = (this.canvas.width / 2) + this.centerX * this.ratio;
-        const y0 = (this.canvas.height / 2) + this.centerY * this.ratio;
+        let x0;
+        let y0;
+        [x0, y0] = this.w2c(0, 0);
+
+        this.ctx.beginPath();
         
         for (let i = - nCols; i < nCols; ++i) {
             this.ctx.moveTo(x0 + i * this.ratio, 0);
@@ -143,7 +160,8 @@ class Viewer {
 
         if (this.zoom > SMALL_GRID_ZOOM_THRESHOLD) {
             this.ctx.lineWidth = 1;
-            this.ctx.color = "#bbb"
+            this.ctx.color = GRID_WEAK_COLOR;
+            this.ctx.setLineDash([10, 10]);
 
             for (let i = - 2 * nCols; i < 2 * nCols; ++i) {
                 this.ctx.moveTo(x0 + i * this.ratio / 2, 0);
@@ -156,19 +174,31 @@ class Viewer {
                 this.ctx.lineTo(this.canvas.width, y0 + i * this.ratio / 2);
                 this.ctx.stroke();
             }
+
+            this.ctx.setLineDash([]);
         }
     }
 
     drawRectangles() {
-        this.ctx.fillStyle = "#444";
+        this.ctx.fillStyle = SCREEN_FILL_COLOR;
+        this.drawRectangle(this.screen, true);
+
         for (let i = 0; i < this.rectangles.length; ++i) {
             const rect = this.rectangles[i];
-            const x = (this.centerX + rect.x) * this.ratio + canvas.width / 2;
-            const y = (this.centerY + rect.y) * this.ratio + canvas.height / 2;
-            const w = rect.w * this.ratio;
-            const h = rect.h * this.ratio;
+            this.drawRectangle(rect);
+        }
+    }
 
+    drawRectangle(rect, fill = false) {
+        let x, y;
+        [x, y] = this.w2c(rect.x, rect.y);
+        const w = rect.w * this.ratio;
+        const h = rect.h * this.ratio;
+
+        if (fill) {
             this.ctx.fillRect(x - w / 2, y - h / 2, w, h);
+        } else {
+            this.ctx.strokeRect(x - w / 2, y - h / 2, w, h);
         }
     }
 
@@ -178,8 +208,10 @@ class Viewer {
             
             this.ctx.fillStyle = cam.color;
                 
-            const x = canvas.width / 2  + (this.centerX + cam.x) * this.ratio;
-            const y = canvas.height / 2  + (this.centerY + cam.y) * this.ratio;
+            let x, y;
+            [x, y] = this.w2c(cam.x, cam.y);
+            let dx = this.ratio * cam.maxRange * Math.cos(cam.alpha * Math.PI / 180);
+            let dy = this.ratio * cam.maxRange * Math.sin(cam.alpha * Math.PI / 180)
 
             // Draw camera
             this.ctx.beginPath();
@@ -187,12 +219,34 @@ class Viewer {
             this.ctx.stroke();
             this.ctx.fill();
 
+            // Draw its direction
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+            this.ctx.lineTo(x + dx, y + dy);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+            
+            // Draw rotation handle
+            this.ctx.beginPath();
+            this.ctx.arc(x + dx, y + dy, CAMERA_SIZE / 2 * this.ratio, 0, 2 * Math.PI);
+            this.ctx.stroke();
+            this.ctx.fill();
+
             // Draw its range
             this.ctx.beginPath();
-            this.ctx.arc(x, y, cam.minRange * this.ratio, (cam.alpha - cam.FoV / 2) * Math.PI / 180,
-            (cam.alpha + cam.FoV / 2) * Math.PI / 180, false);
-            this.ctx.arc(x, y, cam.maxRange * this.ratio, (cam.alpha + cam.FoV / 2) * Math.PI / 180,
-            (cam.alpha - cam.FoV / 2) * Math.PI / 180, true);
+            this.ctx.arc(x, y,
+                cam.minRange * this.ratio,
+                (cam.alpha - cam.FoV / 2) * Math.PI / 180,
+                (cam.alpha + cam.FoV / 2) * Math.PI / 180,
+                false
+            );
+            this.ctx.arc(x, y,
+                cam.maxRange * this.ratio,
+                (cam.alpha + cam.FoV / 2) * Math.PI / 180,
+                (cam.alpha - cam.FoV / 2) * Math.PI / 180,
+                true
+            );
             this.ctx.fill();
         }
     }
