@@ -11,6 +11,10 @@ const GRID_STRONG_COLOR = "#888";
 const GRID_WEAK_COLOR = "#bbb";
 const SCREEN_FILL_COLOR = "#444";
 
+const SELECTED_CONTOUR_COLOR = "#00f";
+const SELECTED_LINE_WIDTH = 5;
+const SELECTED_DASH = [20, 5];
+
 class Viewer {
 
     constructor(canvas) {
@@ -29,9 +33,12 @@ class Viewer {
 
         this.rectangles = [];
         this.cameras = [];
+
+        this.selectedCamera = -1;
+        this.selectedRectangle = -1;
         
         this.cameras.push(new Camera(-1, 0.25, "D435"));
-        this.screen = new Rectangle(0, 0, 1.21, 0.68);
+        this.rectangles.push(new Rectangle(0, 0, 1.21, 0.68)); // first rectangle of the array is the screen
 
         this.setupListeners();
 
@@ -84,6 +91,8 @@ class Viewer {
         this.drawRectangles();
         this.drawCameras();
 
+        this.drawSelectedGizmos();
+
         requestAnimationFrame(() => this.render());
     }
 
@@ -109,7 +118,32 @@ class Viewer {
     }
 
     onLeftMouseDown(event) {
-        
+        this.selectedCamera = -1;
+        this.selectedRectangle = -1;
+
+        let x, y;
+        [x, y] = this.c2w(event.offsetX, event.offsetY);
+
+        // Object select : cameras have priority
+        for (let i = 0; i < this.cameras.length; ++i) {
+            let camera = this.cameras[i];
+            if (camera.isSelected(x, y)) {
+                this.selectedCamera = i;
+                console.log("Camera : ", this.selectedCamera);
+                return;
+            }
+        }
+
+        // Smallest rectangle that is selected wins
+        let minArea = Infinity;
+        for (let i = 0; i < this.rectangles.length; ++i) {
+            let rect = this.rectangles[i];
+            if (rect.isSelected(x, y) && rect.getArea() < minArea) {
+                this.selectedRectangle = i;
+            }
+        }
+
+        console.log("Rectangle : ", this.selectedRectangle);
     }
 
     onLeftMouseUp(event) {
@@ -124,8 +158,8 @@ class Viewer {
             
             this.previousMoveX = event.offsetX;
             this.previousMoveY = event.offsetY;
-            
-            console.log(this.centerX)
+        } else {
+            if ()
         }
     }
 
@@ -181,24 +215,35 @@ class Viewer {
 
     drawRectangles() {
         this.ctx.fillStyle = SCREEN_FILL_COLOR;
-        this.drawRectangle(this.screen, true);
+        this.ctx.strokeStyle = "#000";
 
         for (let i = 0; i < this.rectangles.length; ++i) {
             const rect = this.rectangles[i];
-            this.drawRectangle(rect);
+            this.drawRectangle(rect, i === this.selectedRectangle, i === 0);
         }
     }
 
-    drawRectangle(rect, fill = false) {
+    drawRectangle(rect, selected, fill) {
         let x, y;
         [x, y] = this.w2c(rect.x, rect.y);
         const w = rect.w * this.ratio;
         const h = rect.h * this.ratio;
 
+        if (selected) {
+            this.ctx.lineWidth = SELECTED_LINE_WIDTH;
+            this.ctx.strokeStyle = SELECTED_CONTOUR_COLOR;
+            this.ctx.setLineDash(SELECTED_DASH);
+        }
+
         if (fill) {
             this.ctx.fillRect(x - w / 2, y - h / 2, w, h);
-        } else {
-            this.ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+        }
+        this.ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+
+        if (selected) {
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = "#000";
+            this.ctx.setLineDash([]);
         }
     }
 
@@ -211,7 +256,13 @@ class Viewer {
             let x, y;
             [x, y] = this.w2c(cam.x, cam.y);
             let dx = this.ratio * cam.maxRange * Math.cos(cam.alpha * Math.PI / 180);
-            let dy = this.ratio * cam.maxRange * Math.sin(cam.alpha * Math.PI / 180)
+            let dy = this.ratio * cam.maxRange * Math.sin(cam.alpha * Math.PI / 180);
+
+            if (i === this.selectedCamera) {
+                this.ctx.strokeStyle = SELECTED_CONTOUR_COLOR;
+                this.ctx.lineWidth = SELECTED_LINE_WIDTH;
+                this.ctx.setLineDash(SELECTED_DASH);
+            }
 
             // Draw camera
             this.ctx.beginPath();
@@ -247,7 +298,32 @@ class Viewer {
                 (cam.alpha - cam.FoV / 2) * Math.PI / 180,
                 true
             );
+            this.ctx.closePath();
+            this.ctx.stroke();
             this.ctx.fill();
+
+            // reset style
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = "#000";
+            this.ctx.setLineDash([]);
         }
+    }
+
+    drawSelectedGizmos() {
+        if (this.selectedCamera >= 0) {
+            const cam = this.cameras[this.selectedCamera];
+            this.drawCameraGizmo(cam);
+        } else if (this.selectedRectangle >= 0) {
+            const rect = this.rectangles[this.selectedRectangle];
+            this.drawRectangleGizmo(rect);
+        }
+    }
+
+    drawCameraGizmo(cam) {
+
+    }
+
+    drawRectangleGizmo(rect) {
+
     }
 }

@@ -18,6 +18,8 @@ const D415_RS_MIN_RANGE = 1.5;
 const D415_RS_MAX_RANGE = 15;
 const D415_RS_COLOR = "rgba(255, 255, 0, 0.5)";
 
+const MAX_SELECTION_DISTANCE = 0.3;
+
 class Camera {
 
     constructor(x, y, type){
@@ -54,6 +56,12 @@ class Camera {
             default:
                 throw "Wrong parameter in for type";
         }
+    }
+
+    isSelected(x, y) {
+        let dx = this.x - x;
+        let dy = this.y - y;
+        return dx * dx + dy * dy < MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE;
     }
 
 }
