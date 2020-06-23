@@ -2,6 +2,8 @@
 
 const DEG_TO_RAD = Math.PI / 180;
 
+const CAMERA_SIZE = 0.05;
+
 const D435_MIN_RANGE = 1.5;
 const D435_MAX_RANGE = 2.5;
 const D435_FOV = 76 * DEG_TO_RAD;

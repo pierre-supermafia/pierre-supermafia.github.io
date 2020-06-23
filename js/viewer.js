@@ -5,7 +5,7 @@ const SMALL_GRID_ZOOM_THRESHOLD = 0.8;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;
 
-const CAMERA_SIZE = 0.05;
+const DEFAULT_RECTANGLE_SIZE = 2;
 
 const GRID_STRONG_COLOR = "#888";
 const GRID_WEAK_COLOR = "#bbb";
@@ -95,6 +95,14 @@ class Viewer {
         this.canvas.addEventListener("mousemove", (event) => this.onMouseMove(event));
         this.canvas.addEventListener("contextmenu", (event) => {event.preventDefault();});
 
+        // Buttons listeners
+        document.getElementById("add-rect").addEventListener("click", (event) => {
+            this.addRectangle();
+        });
+        document.getElementById("add-cam").addEventListener("click", (event) => {
+            this.addCamera();
+        });
+
         // Input listeners
         document.getElementById("rect-x").addEventListener("input", (event) => {
             if (this.selectedRectangle >= 0) {
@@ -141,16 +149,6 @@ class Viewer {
     setZoom(zoom) {
         this.zoom = zoom;
         this.ratio = zoom * this.canvas.width / BASE_WIDTH;
-    }
-
-    render() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.drawGrid();
-        this.drawRectangles();
-        this.drawCameras();
-
-        requestAnimationFrame(() => this.render());
     }
 
     onWheel(event) {
@@ -215,8 +213,10 @@ class Viewer {
         let selected = -1;
         for (let i = 0; i < this.rectangles.length; ++i) {
             let rect = this.rectangles[i];
-            if (rect.isPointInSelectRadius(x, y) && rect.getArea() < minArea) {
+            let area = rect.getArea();
+            if (rect.isPointInSelectRadius(x, y) && area < minArea) {
                 selected = i;
+                minArea = area;
             }
         }
         if (selected >= 0) {
@@ -226,6 +226,7 @@ class Viewer {
     
     selectCamera(i) {
         this.selectedCamera = i;
+        this.selectedRectangle = -1;
         const cam = this.cameras[this.selectedCamera];
 
         document.getElementById("cam-container").hidden = false;
@@ -251,6 +252,7 @@ class Viewer {
     
     selectRectangle(i) {
         this.selectedRectangle = i;
+        this.selectedCamera = -1;
         const rect = this.rectangles[this.selectedRectangle];
 
         document.getElementById("rect-container").hidden = false;
@@ -280,8 +282,6 @@ class Viewer {
             } else if (this.selectedRectangle >= 0) {
                 let rect = this.rectangles[this.selectedRectangle];
                 rect.handleManip(x, y, dx, dy);
-            } else {
-                console.log("What is happening");
             }
         } else {
             document.body.style.cursor = "default";
@@ -300,7 +300,29 @@ class Viewer {
         this.previousMouseX = event.offsetX;
         this.previousMouseY = event.offsetY;
     }
+
+    addRectangle() {
+        console.log("salut")
+        this.rectangles.push(new Rectangle(0, 0,
+            DEFAULT_RECTANGLE_SIZE, DEFAULT_RECTANGLE_SIZE, this));
+        this.selectRectangle(this.rectangles.length - 1);
+    }
+
+    addCamera() {
+        this.cameras.push(new Camera(0, 0, "D435", this));
+        this.selectCamera(this.cameras.length - 1);
+    }
     
+    render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.drawGrid();
+        this.drawRectangles();
+        this.drawCameras();
+
+        requestAnimationFrame(() => this.render());
+    }
+
     drawGrid() {
         
         this.ctx.strokeStyle = GRID_STRONG_COLOR;
