@@ -343,13 +343,11 @@ class Viewer {
         for (let i = - nCols; i < nCols; ++i) {
             this.ctx.moveTo(x0 + i * this.ratio, 0);
             this.ctx.lineTo(x0 + i * this.ratio, this.canvas.height);
-            this.ctx.stroke();
         }
         
         for (let i = - nRows; i < nRows; ++i) {
             this.ctx.moveTo(0, y0 + i * this.ratio);
             this.ctx.lineTo(this.canvas.width, y0 + i * this.ratio);
-            this.ctx.stroke();
         }
 
         if (this.zoom > SMALL_GRID_ZOOM_THRESHOLD) {
@@ -360,17 +358,17 @@ class Viewer {
             for (let i = - 2 * nCols; i < 2 * nCols; ++i) {
                 this.ctx.moveTo(x0 + i * this.ratio / 2, 0);
                 this.ctx.lineTo(x0 + i * this.ratio / 2, this.canvas.height);
-                this.ctx.stroke();
             }
 
             for (let i = - 2 * nRows; i < 2 * nRows; ++i) {
                 this.ctx.moveTo(0, y0 + i * this.ratio / 2);
                 this.ctx.lineTo(this.canvas.width, y0 + i * this.ratio / 2);
-                this.ctx.stroke();
             }
 
             this.ctx.setLineDash([]);
         }
+
+        this.ctx.stroke();
     }
 
     drawRectangles() {
