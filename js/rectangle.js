@@ -46,7 +46,7 @@ class Rectangle {
         } else if (this.isPointInSideRadius(x, y, 3)) {
             document.body.style.cursor = "e-resize";
         } else if (this.isPointInSelectRadius(x, y)) {
-            document.body.style.cursor = "move";
+            document.body.style.cursor = "grab";
         }
     }
 
@@ -69,6 +69,7 @@ class Rectangle {
             this.state = this.State.RESIZE_E;
         } else if (this.isPointInSelectRadius(x, y)) {
             this.state = this.State.MOVING;
+            document.body.style.cursor = "grabbing";
         } else {
             return false;
         }

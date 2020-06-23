@@ -100,8 +100,10 @@ class Camera {
     handleMouseDown(x, y) {
         if (this.isPointInSelectRadius(x, y)) {
             this.state = this.State.MOVING;
+            document.body.style.cursor = "grabbing";
         } else if (this.isPointInRotateRadius(x, y)) {
             this.state = this.State.ROTATE;
+            document.body.style.cursor = "grabbing";
         } else {
             return false;
         }
