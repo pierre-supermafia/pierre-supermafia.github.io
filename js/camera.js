@@ -1,17 +1,17 @@
-// TODO: these values aren't real
+// Note : the limits of the range are approximative at best
 
 const DEG_TO_RAD = Math.PI / 180;
 
 const CAMERA_SIZE = 0.05;
 
-const D435_MIN_RANGE = 1.5;
+const D435_MIN_RANGE = 1;
 const D435_MAX_RANGE = 2.5;
-const D435_FOV = 76 * DEG_TO_RAD;
+const D435_FOV = 86 * DEG_TO_RAD;
 const D435_COLOR = "rgba(0, 255, 0, 0.5)";
 
 const D415_MIN_RANGE = 1.5;
-const D415_MAX_RANGE = 4.5;
-const D415_FOV = 50 * DEG_TO_RAD;
+const D415_MAX_RANGE = 4;
+const D415_FOV = 65 * DEG_TO_RAD;
 const D415_COLOR = "rgba(0, 0, 255, 0.5)";
 
 const D435_RS_MIN_RANGE = 1.5;
