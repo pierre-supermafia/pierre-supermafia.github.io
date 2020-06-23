@@ -15,6 +15,8 @@ const SELECTED_CONTOUR_COLOR = "#00f";
 const SELECTED_LINE_WIDTH = 5;
 const SELECTED_DASH = [20, 5];
 
+const CLICK_DISTANCE_TOLERANCE = 7;
+
 class Viewer {
 
     constructor(canvas) {
@@ -28,17 +30,18 @@ class Viewer {
         this.centerY = 0;
 
         this.isDragging = false;
-        this.previousMoveX = 0;
-        this.previousMoveY = 0;
+        this.previousMouseX = 0;
+        this.previousMouseY = 0;
 
         this.rectangles = [];
         this.cameras = [];
 
         this.selectedCamera = -1;
         this.selectedRectangle = -1;
+        this.isManipulatingItem = false;
         
-        this.cameras.push(new Camera(-1, 0.25, "D435"));
-        this.rectangles.push(new Rectangle(0, 0, 1.21, 0.68)); // first rectangle of the array is the screen
+        this.cameras.push(new Camera(-1, 0.25, "D435", this));
+        this.rectangles.push(new Rectangle(0, 0, 1.21, 0.68, this)); // first rectangle of the array is the screen
 
         this.setupListeners();
 
@@ -57,6 +60,19 @@ class Viewer {
             (x - this.canvas.width / 2) / this.ratio - this.centerX,
             (y - this.canvas.height / 2) / this.ratio - this.centerY
         ];
+    }
+
+    isClickable(targetX, targetY, mouseX, mouseY, extraRadius = 0) {
+        // args in world coordinates
+        let tx, ty, mx, my;
+        [tx, ty] = this.w2c(targetX, targetY);
+        [mx, my] = this.w2c(mouseX, mouseY);
+        let dx = tx - mx;
+        let dy = ty - my;
+        
+        let r = CLICK_DISTANCE_TOLERANCE + extraRadius * this.ratio;
+
+        return dx * dx + dy * dy < r * r;
     }
 
     setupListeners() {
@@ -91,8 +107,6 @@ class Viewer {
         this.drawRectangles();
         this.drawCameras();
 
-        this.drawSelectedGizmos();
-
         requestAnimationFrame(() => this.render());
     }
 
@@ -107,8 +121,8 @@ class Viewer {
         event.preventDefault();
 
         this.isDragging = true;
-        this.previousMoveX = event.offsetX;
-        this.previousMoveY = event.offsetY;
+        this.previousMouseX = event.offsetX;
+        this.previousMouseY = event.offsetY;
     }
 
     onRightMouseUp(event) {
@@ -118,18 +132,35 @@ class Viewer {
     }
 
     onLeftMouseDown(event) {
+        let x, y;
+        [x, y] = this.c2w(event.offsetX, event.offsetY);
+
+        if (this.selectedCamera >= 0) {
+            let cam = this.cameras[this.selectedCamera];
+            if (cam.handleMouseDown(x, y)) {
+                this.isManipulatingItem = true;
+                return;
+            }
+        } else if (this.selectedRectangle >= 0) {
+            let rect = this.rectangles[this.selectedRectangle];
+            if (rect.handleMouseDown(x, y)) {
+                this.isManipulatingItem = true;
+                return;
+            }
+        }
+
+        // Not an action on the selected item
+        // => change or reset select
+
         this.selectedCamera = -1;
         this.selectedRectangle = -1;
 
-        let x, y;
-        [x, y] = this.c2w(event.offsetX, event.offsetY);
 
         // Object select : cameras have priority
         for (let i = 0; i < this.cameras.length; ++i) {
             let camera = this.cameras[i];
-            if (camera.isSelected(x, y)) {
+            if (camera.isPointInSelectRadius(x, y)) {
                 this.selectedCamera = i;
-                console.log("Camera : ", this.selectedCamera);
                 return;
             }
         }
@@ -138,31 +169,53 @@ class Viewer {
         let minArea = Infinity;
         for (let i = 0; i < this.rectangles.length; ++i) {
             let rect = this.rectangles[i];
-            if (rect.isSelected(x, y) && rect.getArea() < minArea) {
+            if (rect.isPointInSelectRadius(x, y) && rect.getArea() < minArea) {
                 this.selectedRectangle = i;
             }
         }
-
-        console.log("Rectangle : ", this.selectedRectangle);
     }
 
     onLeftMouseUp(event) {
-        
+        this.isManipulatingItem = false;
     }
 
     onMouseMove(event) {
         if (this.isDragging) {
-            
-            this.centerX += (event.offsetX - this.previousMoveX) / this.ratio;
-            this.centerY += (event.offsetY - this.previousMoveY) / this.ratio;
-            
-            this.previousMoveX = event.offsetX;
-            this.previousMoveY = event.offsetY;
-        } else {
-            if ()
-        }
-    }
+            this.centerX += (event.offsetX - this.previousMouseX) / this.ratio;
+            this.centerY += (event.offsetY - this.previousMouseY) / this.ratio;
+        } else if (this.isManipulatingItem) {
+            let x,y ;
+            [x, y] = this.c2w(event.offsetX, event.offsetY);
+            let dx = (event.offsetX - this.previousMouseX) / this.ratio;
+            let dy = (event.offsetY - this.previousMouseY) / this.ratio;
 
+            if (this.selectedCamera >= 0) {
+                let cam = this.cameras[this.selectedCamera];
+                cam.handleManip(x, y, dx, dy);
+            } else if (this.selectedRectangle >= 0) {
+                let rect = this.rectangles[this.selectedRectangle];
+                rect.handleManip(x, y, dx, dy);
+            } else {
+                console.log("What is happening");
+            }
+        } else {
+            document.body.style.cursor = "default";
+            
+            let x, y;
+            [x, y] = this.c2w(event.offsetX, event.offsetY);
+            if (this.selectedCamera >= 0) {
+                const cam = this.cameras[this.selectedCamera];
+                cam.handleHover(x, y);
+            } else if (this.selectedRectangle >= 0) {
+                const rect = this.rectangles[this.selectedRectangle];
+                rect.handleHover(x, y);
+            }
+        }
+
+        this.previousMouseX = event.offsetX;
+        this.previousMouseY = event.offsetY;
+    }
+    
     drawGrid() {
         
         this.ctx.strokeStyle = GRID_STRONG_COLOR;
@@ -219,111 +272,14 @@ class Viewer {
 
         for (let i = 0; i < this.rectangles.length; ++i) {
             const rect = this.rectangles[i];
-            this.drawRectangle(rect, i === this.selectedRectangle, i === 0);
-        }
-    }
-
-    drawRectangle(rect, selected, fill) {
-        let x, y;
-        [x, y] = this.w2c(rect.x, rect.y);
-        const w = rect.w * this.ratio;
-        const h = rect.h * this.ratio;
-
-        if (selected) {
-            this.ctx.lineWidth = SELECTED_LINE_WIDTH;
-            this.ctx.strokeStyle = SELECTED_CONTOUR_COLOR;
-            this.ctx.setLineDash(SELECTED_DASH);
-        }
-
-        if (fill) {
-            this.ctx.fillRect(x - w / 2, y - h / 2, w, h);
-        }
-        this.ctx.strokeRect(x - w / 2, y - h / 2, w, h);
-
-        if (selected) {
-            this.ctx.lineWidth = 1;
-            this.ctx.strokeStyle = "#000";
-            this.ctx.setLineDash([]);
+            rect.draw(this.ctx, i === this.selectedRectangle, i === 0);
         }
     }
 
     drawCameras() {
         for (let i = 0; i < this.cameras.length; ++i) {
             const cam = this.cameras[i];
-            
-            this.ctx.fillStyle = cam.color;
-                
-            let x, y;
-            [x, y] = this.w2c(cam.x, cam.y);
-            let dx = this.ratio * cam.maxRange * Math.cos(cam.alpha * Math.PI / 180);
-            let dy = this.ratio * cam.maxRange * Math.sin(cam.alpha * Math.PI / 180);
-
-            if (i === this.selectedCamera) {
-                this.ctx.strokeStyle = SELECTED_CONTOUR_COLOR;
-                this.ctx.lineWidth = SELECTED_LINE_WIDTH;
-                this.ctx.setLineDash(SELECTED_DASH);
-            }
-
-            // Draw camera
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, CAMERA_SIZE * this.ratio, 0, 2 * Math.PI);
-            this.ctx.stroke();
-            this.ctx.fill();
-
-            // Draw its direction
-            this.ctx.setLineDash([5, 5]);
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-            this.ctx.lineTo(x + dx, y + dy);
-            this.ctx.stroke();
-            this.ctx.setLineDash([]);
-            
-            // Draw rotation handle
-            this.ctx.beginPath();
-            this.ctx.arc(x + dx, y + dy, CAMERA_SIZE / 2 * this.ratio, 0, 2 * Math.PI);
-            this.ctx.stroke();
-            this.ctx.fill();
-
-            // Draw its range
-            this.ctx.beginPath();
-            this.ctx.arc(x, y,
-                cam.minRange * this.ratio,
-                (cam.alpha - cam.FoV / 2) * Math.PI / 180,
-                (cam.alpha + cam.FoV / 2) * Math.PI / 180,
-                false
-            );
-            this.ctx.arc(x, y,
-                cam.maxRange * this.ratio,
-                (cam.alpha + cam.FoV / 2) * Math.PI / 180,
-                (cam.alpha - cam.FoV / 2) * Math.PI / 180,
-                true
-            );
-            this.ctx.closePath();
-            this.ctx.stroke();
-            this.ctx.fill();
-
-            // reset style
-            this.ctx.lineWidth = 1;
-            this.ctx.strokeStyle = "#000";
-            this.ctx.setLineDash([]);
+            cam.draw(this.ctx, i === this.selectedCamera);
         }
-    }
-
-    drawSelectedGizmos() {
-        if (this.selectedCamera >= 0) {
-            const cam = this.cameras[this.selectedCamera];
-            this.drawCameraGizmo(cam);
-        } else if (this.selectedRectangle >= 0) {
-            const rect = this.rectangles[this.selectedRectangle];
-            this.drawRectangleGizmo(rect);
-        }
-    }
-
-    drawCameraGizmo(cam) {
-
-    }
-
-    drawRectangleGizmo(rect) {
-
     }
 }
