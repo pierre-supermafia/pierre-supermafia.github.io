@@ -392,9 +392,14 @@ class Viewer {
         this.ctx.fillStyle = SCREEN_FILL_COLOR;
         this.ctx.strokeStyle = "#000";
 
-        for (let i = 0; i < this.rectangles.length; ++i) {
+        // The screen is drawn last for it to be above the others
+        for (let i = this.rectangles.length - 1; i >= 0; --i) {
             const rect = this.rectangles[i];
-            rect.draw(this.ctx, i === this.selectedRectangle, i === 0);
+            if (i === 0) {
+                rect.draw(this.ctx, i === this.selectedRectangle, SCREEN_FILL_COLOR);
+            } else {
+                rect.draw(this.ctx, i === this.selectedRectangle);
+            }
         }
     }
 
