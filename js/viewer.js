@@ -104,7 +104,8 @@ class Viewer {
         });
 
         document.getElementById("delete-rect").addEventListener("click", (event) => {
-            if (this.selectedRectangle >= 0) {
+            // Prevent deleting the screen
+            if (this.selectedRectangle > 0) {
                 this.rectangles.splice(this.selectedRectangle, 1);
                 this.resetSelection();
             }
