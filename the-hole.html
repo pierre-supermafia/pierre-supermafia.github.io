@@ -8,41 +8,73 @@
 
   <link rel="stylesheet" href="css/styles.css?v=1.0">
 
+  <style>
+    .flex-container {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #controls {
+      text-align: right;
+    }
+  </style>
+
 </head>
 
 <body>
-    <h1>Placement des caméras</h1>
+  <div class="flex-container">
+    <div id="main-view">
+      <h1>Placement des caméras</h1>
 
-    <input type="button" id="add-rect" value="Nouveau rectangle">
-    <input type="button" id="add-cam" value="Nouvelle caméra">
+      <input type="button" id="add-rect" value="Nouveau rectangle">
+      <input type="button" id="add-cam" value="Nouvelle caméra">
 
-    <br>
+      <br>
 
-    <canvas id="canvas" width="960" height="720"></canvas>
+      <canvas id="canvas" width="960" height="720"></canvas>
 
-    <div id="rect-container" hidden>
-      <h2>Rectangle</h2>
-      <label for="rect-x">x : </label><input type="text" id="rect-x">
-      <label for="rect-y">y : </label><input type="text" id="rect-y">
-      <label for="rect-w">Longueur : </label><input type="text" id="rect-w">
-      <label for="rect-h">Largeur : </label><input type="text" id="rect-h">
+      <div id="rect-container" hidden>
+        <h2>Rectangle</h2>
+        <label for="rect-x">x : </label><input type="text" id="rect-x">
+        <label for="rect-y">y : </label><input type="text" id="rect-y">
+        <label for="rect-w">Longueur : </label><input type="text" id="rect-w">
+        <label for="rect-h">Largeur : </label><input type="text" id="rect-h">
+        <input type="button" id="delete-rect" value="Supprimer">
+      </div>
+      <div id="cam-container" hidden>
+        <h2>Caméra</h2>
+        <label for="cam-type">Type : </label><select id="cam-type">
+          <option>D435 avec squelette</option>
+          <option>D435 sans squelette</option>
+          <option>D415 avec squelette</option>
+          <option>D415 sans squelette</option>
+        </select>
+        <label for="cam-x">x : </label><input type="text" id="cam-x">
+        <label for="cam-y">y : </label><input type="text" id="cam-y">
+        <label for="cam-alpha">Angle : </label><input type="text" id="cam-alpha">
+        <input type="button" id="delete-cam" value="Supprimer">
+      </div>
+      
+      <script src="js/rectangle.js"></script>
+      <script src="js/camera.js"></script>
+      <script src="js/viewer.js"></script>
+      <script src="js/the-hole.js"></script>
     </div>
-    <div id="cam-container" hidden>
-      <h2>Caméra</h2>
-      <label for="cam-type">Type : </label><select id="cam-type">
-        <option>D435 avec squelette</option>
-        <option>D435 sans squelette</option>
-        <option>D415 avec squelette</option>
-        <option>D415 sans squelette</option>
-      </select>
-      <label for="cam-x">x : </label><input type="text" id="cam-x">
-      <label for="cam-y">y : </label><input type="text" id="cam-y">
-      <label for="cam-alpha">Angle : </label><input type="text" id="cam-alpha">
+    <div id="controls">
+      <h2>Commandes</h2>
+      <p>
+        Clic droit pour déplacer la vue.
+      </p>
+      <p>
+        Roulette pour zoomer / dézoomer
+      </p>
+      <p>
+        Clic gauche pour sélectionner un élément<br />(les caméras doivent être cliquées sur leurs centres, pas sur leur champs de vision)
+      </p>
+      <p>
+        Clic gauche pour redimensionner / déplacer un élément sélectionné
+      </p>
     </div>
-    
-    <script src="js/rectangle.js"></script>
-    <script src="js/camera.js"></script>
-    <script src="js/viewer.js"></script>
-    <script src="js/the-hole.js"></script>
+  </div>
 </body>
 </html>

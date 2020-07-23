@@ -1,3 +1,5 @@
+const RECTANGLE_FILL_COLOR = "#d0d0d0"
+
 class Rectangle {
 
     State = {
@@ -207,7 +209,7 @@ class Rectangle {
      * @param {boolean} selected 
      * @param {string} fill color to fill in 
      */
-    draw(ctx, selected, fill) {
+    draw(ctx, selected, fillColor = RECTANGLE_FILL_COLOR) {
         let x, y;
         [x, y] = this.viewer.w2c(this.x, this.y);
         const w = this.w * this.viewer.ratio;
@@ -219,9 +221,8 @@ class Rectangle {
             ctx.setLineDash(SELECTED_DASH);
         }
 
-        if (fill) {
-            ctx.fillRect(x - w / 2, y - h / 2, w, h);
-        }
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(x - w / 2, y - h / 2, w, h);
         ctx.strokeRect(x - w / 2, y - h / 2, w, h);
 
         // reset style

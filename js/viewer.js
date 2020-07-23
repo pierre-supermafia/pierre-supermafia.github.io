@@ -125,6 +125,21 @@ class Viewer {
             this.addCamera();
         });
 
+        document.getElementById("delete-rect").addEventListener("click", (event) => {
+            // Prevent deleting the screen
+            if (this.selectedRectangle > 0) {
+                this.rectangles.splice(this.selectedRectangle, 1);
+                this.resetSelection();
+            }
+        });
+
+        document.getElementById("delete-cam").addEventListener("click", (event) => {
+            if (this.selectedCamera >= 0) {
+                this.cameras.splice(this. selectedCamera, 1);
+                this.resetSelection();
+            }
+        })
+
         // Input listeners
         document.getElementById("rect-x").addEventListener("input", (event) => {
             if (this.selectedRectangle >= 0) {
@@ -219,12 +234,7 @@ class Viewer {
 
         // Not an action on the selected item
         // => change or reset select
-
-        this.selectedCamera = -1;
-        document.getElementById("cam-container").hidden = true;
-        this.selectedRectangle = -1;
-        document.getElementById("rect-container").hidden = true;
-
+        this.resetSelection();
 
         // Object select : cameras have priority
         for (let i = 0; i < this.cameras.length; ++i) {
@@ -249,6 +259,16 @@ class Viewer {
         if (selected >= 0) {
             this.selectRectangle(selected);
         }
+    }
+    
+    /**
+     * Removes any selection
+     */
+    resetSelection() {
+        this.selectedCamera = -1;
+        document.getElementById("cam-container").hidden = true;
+        this.selectedRectangle = -1;
+        document.getElementById("rect-container").hidden = true;
     }
     
     /**
@@ -427,9 +447,14 @@ class Viewer {
         this.ctx.fillStyle = SCREEN_FILL_COLOR;
         this.ctx.strokeStyle = "#000";
 
-        for (let i = 0; i < this.rectangles.length; ++i) {
+        // The screen is drawn last for it to be above the others
+        for (let i = this.rectangles.length - 1; i >= 0; --i) {
             const rect = this.rectangles[i];
-            rect.draw(this.ctx, i === this.selectedRectangle, i === 0);
+            if (i === 0) {
+                rect.draw(this.ctx, i === this.selectedRectangle, SCREEN_FILL_COLOR);
+            } else {
+                rect.draw(this.ctx, i === this.selectedRectangle);
+            }
         }
     }
 
