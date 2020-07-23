@@ -42,6 +42,15 @@ class Camera {
         this.state = this.State.DEFAULT;
     }
 
+    /**
+     * Set the type of camera and tracking capabilities
+     * 
+     * @param {string} type Type of the camera. Must be among
+     * D435
+     * D435 avec squelette
+     * D415
+     * D415 avec squelette
+     */
     setType(type) {
 
         switch (type) {
@@ -80,16 +89,34 @@ class Camera {
         }
     }
 
+    /**
+     * Returns true if the given point is sufficiently close to its center
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     isPointInSelectRadius(x, y) {
         return this.viewer.isClickable(this.x, this.y, x, y, CAMERA_SIZE);
     }
 
+    /**
+     * Returns true if the given point is sufficiently close to its rotation gizmo
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     isPointInRotateRadius(x, y) {
         let tx = this.x + this.maxRange * Math.cos(this.alpha);
         let ty = this.y + this.maxRange * Math.sin(this.alpha);
         return this.viewer.isClickable(tx, ty, x, y, CAMERA_SIZE / 2);
     }
 
+    /**
+     * Update the mouse icon accordingly
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     handleHover(x, y) {
         if (this.isPointInSelectRadius(x, y)
         || this.isPointInRotateRadius(x, y)) {
@@ -97,6 +124,12 @@ class Camera {
         }
     }
 
+    /**
+     * Handle the mouse click
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     handleMouseDown(x, y) {
         if (this.isPointInSelectRadius(x, y)) {
             this.state = this.State.MOVING;
@@ -110,6 +143,14 @@ class Camera {
         return true;
     }
 
+    /**
+     * Handle the movement while the left mouse button is held down
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} dx 
+     * @param {number} dy 
+     */
     handleManip(x, y, dx, dy) {
         switch (this.state) {
             case this.State.MOVING:
@@ -124,6 +165,12 @@ class Camera {
         }
     }
 
+    /**
+     * Draw the camera and its detection range
+     * 
+     * @param {*} ctx 
+     * @param {boolean} selected 
+     */
     draw(ctx, selected) {
         ctx.fillStyle = this.color;
                 

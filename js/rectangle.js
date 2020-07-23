@@ -24,10 +24,19 @@ class Rectangle {
         this.viewer = viewer;
     }
 
+    /**
+     * Compute the area of the rectangle
+     */
     getArea() {
         return this.w * this.h;
     }
 
+    /**
+     * Change the mouse icon according to it position
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     handleHover(x, y) {
         if (this.isPointInCornerRadius(x, y, 0)) {
             document.body.style.cursor = "nw-resize";
@@ -50,6 +59,12 @@ class Rectangle {
         }
     }
 
+    /**
+     * Update the state according to the point clicked
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     handleMouseDown(x, y) {
         if (this.isPointInCornerRadius(x, y, 0)) {
             this.state = this.State.RESIZE_NW;
@@ -76,6 +91,14 @@ class Rectangle {
         return true;
     }
 
+    /**
+     * Handle the movement while the left mouse button is held down
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} dx 
+     * @param {number} dy 
+     */
     handleManip(x, y, dx, dy) {
         switch (this.state) {
             case this.State.MOVING:
@@ -128,28 +151,44 @@ class Rectangle {
         }
     }
 
+    /**
+     * Returns true if the given point is in the selection region of the rectangle
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     */
     isPointInSelectRadius(x, y) {
         return this.x - this.w / 2 < x && x < this.x + this.w / 2
             && this.y - this.h / 2 < y && y < this.y + this.h / 2;
     }
 
+    /**
+     * Returns true if the given point is in the selection region of the given corner
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} numCorner number denoting the corner to test
+     *  0 ____ 1
+     *  |      |
+     *  2 ____ 3
+     */
     isPointInCornerRadius(x, y, numCorner) {
-        // numCorner :
-        // 0 ____ 1
-        // |      |
-        // 2 ____ 3
         const cx = (numCorner % 2 === 0) ? this.x - this.w / 2 : this.x + this.w / 2;
         const cy = (numCorner < 2)       ? this.y - this.h / 2 : this.y + this.h / 2;
         return this.viewer.isClickable(cx, cy, x, y);
     }
 
+    /**
+     * Returns true if the given point is in the selection region of the given side
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} numSide number denoting the side to test
+     * __ 0 __
+     * |     |
+     * 1     3
+     * |     |
+     * __ 2 __
+     */
     isPointInSideRadius(x, y, numSide) {
-        // numSide:
-        // __ 0 __
-        // |     |
-        // 1     3
-        // |     |
-        // __ 2 __
         if (numSide % 2 === 0) {
             const cy = (numSide === 0) ? this.y - this.h / 2 : this.y + this.h / 2;
             return this.x - this.w / 2 < x && x < this.x + this.w / 2
@@ -161,6 +200,13 @@ class Rectangle {
         }
     }
 
+    /**
+     * Draw the rectangle in the given graphical context
+     * 
+     * @param {*} ctx 
+     * @param {boolean} selected 
+     * @param {string} fill color to fill in 
+     */
     draw(ctx, selected, fill) {
         let x, y;
         [x, y] = this.viewer.w2c(this.x, this.y);

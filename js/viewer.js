@@ -48,6 +48,11 @@ class Viewer {
         this.render();
     }
 
+    /**
+     * Converts the world coordinates to the canvas coordinates
+     * @param {number} x 
+     * @param {number} y 
+     */
     w2c(x, y) {
         return [
             this.canvas.width / 2 + this.ratio * (this.centerX + x),
@@ -55,6 +60,11 @@ class Viewer {
         ];
     }
 
+    /**
+     * Converts the canvas coordinates to the world coordinates
+     * @param {number} x 
+     * @param {number} y 
+     */
     c2w(x, y) {
         return [
             (x - this.canvas.width / 2) / this.ratio - this.centerX,
@@ -62,11 +72,20 @@ class Viewer {
         ];
     }
 
+    /**
+     * Return true if the given mouse click is close enough to the target
+     * 
+     * @param {number} targetX x component of the target in world coordinates
+     * @param {number} targetY y component of the target in world coordinates
+     * @param {number} mouseX x component of the mouse location in canvas coordinates
+     * @param {number} mouseY y component of the mouse location in canvas coordinates
+     * @param {number} extraRadius Radius of the target (in world scale) 
+     */
     isClickable(targetX, targetY, mouseX, mouseY, extraRadius = 0) {
-        // args in world coordinates
         let tx, ty, mx, my;
         [tx, ty] = this.w2c(targetX, targetY);
         [mx, my] = this.w2c(mouseX, mouseY);
+
         let dx = tx - mx;
         let dy = ty - my;
         
@@ -75,6 +94,9 @@ class Viewer {
         return dx * dx + dy * dy < r * r;
     }
 
+    /**
+     * Creates listeners for all the canvas actions as well as for all the input actions
+     */
     setupListeners() {
         // Canvas listeners
         this.canvas.addEventListener("wheel", (event) => this.onWheel(event), false);
@@ -146,6 +168,11 @@ class Viewer {
         });
     }
 
+    /**
+     * Set the zoom
+     * 
+     * @param {number} zoom 
+     */
     setZoom(zoom) {
         this.zoom = zoom;
         this.ratio = zoom * this.canvas.width / BASE_WIDTH;
@@ -224,6 +251,11 @@ class Viewer {
         }
     }
     
+    /**
+     * Change the currently selected item (if any) to the given camera
+     * 
+     * @param {number} i Number of the newly selected camera
+     */
     selectCamera(i) {
         this.selectedCamera = i;
         this.selectedRectangle = -1;
@@ -250,6 +282,11 @@ class Viewer {
         document.getElementById("cam-alpha").value = cam.alpha / DEG_TO_RAD;
     }
     
+    /**
+     * Change the currently selected item (if any) to the given rectangle
+     * 
+     * @param {number} i Number of the newly selected rectangle
+     */
     selectRectangle(i) {
         this.selectedRectangle = i;
         this.selectedCamera = -1;
@@ -301,6 +338,9 @@ class Viewer {
         this.previousMouseY = event.offsetY;
     }
 
+    /**
+     * Adds a new rectangle in the scene, and selects it
+     */
     addRectangle() {
         console.log("salut")
         this.rectangles.push(new Rectangle(0, 0,
@@ -308,11 +348,17 @@ class Viewer {
         this.selectRectangle(this.rectangles.length - 1);
     }
 
+    /**
+     * Adds a new camera in the scene, and selects it
+     */
     addCamera() {
         this.cameras.push(new Camera(0, 0, "D435", this));
         this.selectCamera(this.cameras.length - 1);
     }
     
+    /**
+     * Renders the whole scene
+     */
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -323,6 +369,9 @@ class Viewer {
         requestAnimationFrame(() => this.render());
     }
 
+    /**
+     * Draws the grid. If zoomed in enough, the half-grid will appear
+     */
     drawGrid() {
         
         this.ctx.strokeStyle = GRID_STRONG_COLOR;
@@ -371,6 +420,9 @@ class Viewer {
         this.ctx.stroke();
     }
 
+    /**
+     * Draws all the rectangles
+     */
     drawRectangles() {
         this.ctx.fillStyle = SCREEN_FILL_COLOR;
         this.ctx.strokeStyle = "#000";
@@ -381,6 +433,7 @@ class Viewer {
         }
     }
 
+    // Draws all the cameras
     drawCameras() {
         for (let i = 0; i < this.cameras.length; ++i) {
             const cam = this.cameras[i];
